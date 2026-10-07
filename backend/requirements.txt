@@ -1,0 +1,12 @@
+# Нижние границы — версии с готовыми сборками для Python 3.11–3.14.
+# Точный состав зафиксирован в Docker-образе и в кэше CI.
+fastapi>=0.115.6
+uvicorn[standard]>=0.32.1
+pydantic>=2.10.4
+pydantic-settings>=2.7.0
+SQLAlchemy>=2.0.36
+opensearch-py>=2.8.0
+PyJWT>=2.10.1
+httpx>=0.28.1
+python-multipart>=0.0.20
+segno>=1.6.1
