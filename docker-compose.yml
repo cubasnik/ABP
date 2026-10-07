@@ -1,0 +1,58 @@
+# Развёртывание целиком: OpenSearch + сервер API + клиент.
+# docker compose up -d --build   →   http://localhost:3000
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      - SEARCH_BACKEND=auto
+      - OPENSEARCH_URL=http://opensearch:9200
+      - DOCS_DIR=/sample-docs
+      - DATABASE_URL=sqlite:////app/data/abp.db
+      - CORS_ORIGINS=http://localhost:3000
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - backend-data:/app/data
+      - backend-logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    stop_grace_period: 15s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  opensearch-data:
+  backend-data:
+  backend-logs:
